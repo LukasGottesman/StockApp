@@ -171,7 +171,13 @@ if transactions_df.empty or holdings_df.empty:
 
 # --- HLAVNÍ STRÁNKA ---
 st.title("📊 Přehled akciového portfolia")
-st.write(f"Poslední aktualizace cen: {datetime.now().strftime('%d.%m.%Y v %H:%M:%S')}")
+try:
+    from zoneinfo import ZoneInfo
+    current_time = datetime.now(ZoneInfo("Europe/Prague"))
+except Exception:
+    current_time = datetime.now()
+st.write(f"Poslední aktualizace cen: {current_time.strftime('%d.%m.%Y v %H:%M:%S')}")
+
 
 # --- FILTRY ---
 # Uživatel může filtrovat podle brokera
