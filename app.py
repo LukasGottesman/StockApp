@@ -178,7 +178,6 @@ except Exception:
     current_time = datetime.now()
 st.write(f"Poslední aktualizace cen: {current_time.strftime('%d.%m.%Y v %H:%M:%S')}")
 
-
 # --- FILTRY ---
 # Uživatel může filtrovat podle brokera
 brokers = ["Všichni"] + list(holdings_df['broker'].unique())
