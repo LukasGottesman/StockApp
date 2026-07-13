@@ -403,6 +403,9 @@ with tab_holdings:
             cmap='RdYlGn',
             vmin=-50.0,
             vmax=0.0
+        ).background_gradient(
+            subset=['Tržní kap.'],
+            cmap='RdYlGn'
         ),
         use_container_width=True,
         height=500
@@ -555,6 +558,9 @@ with tab_watchlist:
                 cmap='RdYlGn',
                 vmin=-50.0,
                 vmax=0.0
+            ).background_gradient(
+                subset=['Tržní kap.'],
+                cmap='RdYlGn'
             ),
             use_container_width=True,
             height=500
