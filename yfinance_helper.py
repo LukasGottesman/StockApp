@@ -174,7 +174,8 @@ def fetch_current_prices(tickers):
     print(f"Stahuji aktuální ceny pro {len(tickers)} tickerů...")
     # yf.download stáhne data pro všechny tickery najednou
     # period="1d" nám dá data za poslední den
-    data = yf.download(tickers, period="1d", group_by="ticker", progress=False)
+    # Přidáno threads=False pro zabránění Segmentation fault na Streamlit Cloud
+    data = yf.download(tickers, period="1d", group_by="ticker", progress=False, threads=False)
     
     current_prices = {}
     
