@@ -27,7 +27,8 @@
 
 \## Opravy a vylepšení
 
-\- Ověřit, jak aplikace zvládá splity akcií u titulů jako Apple nebo Nvidia. Už jsme začali řešit minule 26.6.2026
+- Ověřit, jak aplikace zvládá splity akcií u titulů jako Apple nebo Nvidia. Už jsme začali řešit minule 26.6.2026
+- **Optimalizace stahování cen:** Pokud budeme v budoucnu aplikaci migrovat na výkonnější hardware (mimo Streamlit Community Cloud), zvážit opětovné zapnutí zrychleného stahování dat přes `yfinance` ve více vláknech (`threads=True`), které jsme museli vypnout kvůli Segmentation fault.
 
 
 
