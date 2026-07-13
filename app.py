@@ -248,8 +248,10 @@ with tab_dash:
         st.plotly_chart(fig_broker, use_container_width=True)
         
     with g_col2:
-        # Graf 2: Top 10 největších pozic v portfoliu
-        top_positions = filtered_holdings.sort_values(by='current_value', ascending=False).head(10)
+        # Graf 2: Top 10 největších pozic v portfoliu (agregováno přes brokery)
+        top_10_tickers = filtered_holdings.groupby('ticker')['current_value'].sum().nlargest(10).index
+        top_positions = filtered_holdings[filtered_holdings['ticker'].isin(top_10_tickers)]
+        
         fig_positions = px.bar(
             top_positions,
             x='ticker',
@@ -257,7 +259,8 @@ with tab_dash:
             color='broker',
             title='Top 10 největších pozic',
             labels={'current_value': 'Aktuální hodnota', 'ticker': 'Akcie'},
-            color_discrete_sequence=px.colors.qualitative.Safe
+            color_discrete_sequence=px.colors.qualitative.Safe,
+            category_orders={'ticker': list(top_10_tickers)}
         )
         fig_positions.update_layout(template="plotly_dark")
         st.plotly_chart(fig_positions, use_container_width=True)
