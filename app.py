@@ -234,6 +234,14 @@ with tab_dash:
     st.subheader("Alokace aktiv")
     g_col1, g_col2 = st.columns(2)
     
+    # Fixní barvy pro brokery, aby se vždy shodovaly napříč všemi grafy
+    BROKER_COLORS = {
+        "XTB": "#636EFA",     # Modrá
+        "FIO": "#EF553B",     # Červená
+        "Revolut": "#00CC96", # Zelená
+        "Ostatní": "#AB63FA"  # Fialová pro případné další
+    }
+    
     with g_col1:
         # Graf 1: Distribuce podle brokerů (pouze pokud máme zobrazené všechny)
         broker_dist = filtered_holdings.groupby('broker')['current_value'].sum().reset_index()
@@ -242,7 +250,8 @@ with tab_dash:
             values='current_value', 
             names='broker', 
             title='Podíl brokerů na hodnotě portfolia',
-            color_discrete_sequence=px.colors.qualitative.Pastel
+            color='broker',
+            color_discrete_map=BROKER_COLORS
         )
         fig_broker.update_layout(template="plotly_dark")
         st.plotly_chart(fig_broker, use_container_width=True)
@@ -259,7 +268,7 @@ with tab_dash:
             color='broker',
             title='Top 10 největších pozic',
             labels={'current_value': 'Aktuální hodnota', 'ticker': 'Akcie'},
-            color_discrete_sequence=px.colors.qualitative.Safe,
+            color_discrete_map=BROKER_COLORS,
             category_orders={'ticker': list(top_10_tickers)}
         )
         fig_positions.update_layout(template="plotly_dark")
