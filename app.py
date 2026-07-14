@@ -15,6 +15,40 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- OCHRANA HESLEM ---
+APP_PASSWORD = "heslo"  # 👈 ZDE SI ZMĚŇ HESLO NA NĚJAKÉ VLASTNÍ!
+
+def check_password():
+    """Vrátí True, pokud uživatel zadal správné heslo."""
+    def password_entered():
+        if st.session_state["password"] == APP_PASSWORD:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # smaže heslo ze session paměti
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # Uživatel ještě nezadal heslo
+        st.markdown("<h2 style='text-align: center; margin-top: 100px; color: #88c0d0;'>🔒 Ochrana portfolia</h2>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input("Zadejte heslo pro přístup k aplikaci:", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["password_correct"]:
+        # Uživatel zadal špatné heslo
+        st.markdown("<h2 style='text-align: center; margin-top: 100px; color: #88c0d0;'>🔒 Ochrana portfolia</h2>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input("Zadejte heslo pro přístup k aplikaci:", type="password", on_change=password_entered, key="password")
+            st.error("Nesprávné heslo! Zkuste to znovu.")
+        return False
+    else:
+        # Heslo bylo zadáno správně
+        return True
+
+if not check_password():
+    st.stop()  # Zastaví spuštění zbytku aplikace (nic pod tímto kódem se neukáže)
+
 # --- CUSTOM CSS PRO PREMIUM VZHLED (Educational) ---
 # Tímto injektujeme vlastní CSS do aplikace, abychom upravili výchozí vzhled Streamlitu.
 # Vytvoříme moderní tmavý vzhled s jemnými stíny a zaoblenými rohy pro karty (glassmorphism styl).
