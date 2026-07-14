@@ -158,6 +158,9 @@ with st.sidebar:
     st.title("📈 Nastavení")
     st.write("Vítej v aplikaci pro správu tvého akciového portfolia!")
     
+    # Přepínač pro Privacy Mode
+    privacy_mode = st.toggle("👁️ Skrýt finanční detaily (Privacy Mode)", value=True)
+    
     # Tlačítko pro vymazání keše a znovunačtení cen
     if st.button("🔄 Aktualizovat data (Znovunačíst ceny)", use_container_width=True):
         st.cache_data.clear()
@@ -249,15 +252,20 @@ with tab_dash:
         delta_class = "delta-plus" if gain_loss >= 0 else "delta-minus"
         sign = "+" if gain_loss >= 0 else ""
         
+        # Privacy mode masking
+        disp_value = "***" if privacy_mode else f"{current_value:,.2f} {curr}"
+        disp_cost = "***" if privacy_mode else f"Investováno: {total_cost:,.2f} {curr}"
+        disp_delta = "***" if privacy_mode else f"Celkem: {sign}{gain_loss:,.2f} {curr} ({sign}{gain_loss_pct:.2f}%)"
+        
         with cols[i]:
             # HTML karta s naším custom CSS stylem
             st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-title">Pozice v {curr}</div>
-                <div class="metric-value">{current_value:,.2f} {curr}</div>
-                <div style="font-size: 13px; color: #4c566a; margin-bottom: 8px;">Investováno: {total_cost:,.2f} {curr}</div>
+                <div class="metric-value">{disp_value}</div>
+                <div style="font-size: 13px; color: #4c566a; margin-bottom: 8px;">{disp_cost}</div>
                 <div class="metric-delta {delta_class}">
-                    Celkem: {sign}{gain_loss:,.2f} {curr} ({sign}{gain_loss_pct:.2f}%)
+                    {disp_delta}
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -287,6 +295,8 @@ with tab_dash:
             color='broker',
             color_discrete_map=BROKER_COLORS
         )
+        if privacy_mode:
+            fig_broker.update_traces(hovertemplate='<b>%{label}</b><br>Hodnota: ***<extra></extra>')
         fig_broker.update_layout(template="plotly_dark")
         st.plotly_chart(fig_broker, use_container_width=True)
         
@@ -305,6 +315,8 @@ with tab_dash:
             color_discrete_map=BROKER_COLORS,
             category_orders={'ticker': list(top_10_tickers)}
         )
+        if privacy_mode:
+            fig_positions.update_traces(hovertemplate='<b>%{x}</b><br>Hodnota: ***<extra></extra>')
         fig_positions.update_layout(template="plotly_dark")
         st.plotly_chart(fig_positions, use_container_width=True)
 
@@ -342,15 +354,23 @@ with tab_dash:
                 hover_data=['Akcie'],
                 color_discrete_sequence=px.colors.qualitative.Vivid
             )
+            
+            hover_temp = (
+                '<b>%{label}</b><br>'
+                'Hodnota: ***<br>'
+                'Podíl: %{percent}<br>'
+                'Akcie: %{customdata[0]}<extra></extra>'
+            ) if privacy_mode else (
+                '<b>%{label}</b><br>'
+                'Hodnota: %{value:,.2f}<br>'
+                'Podíl: %{percent}<br>'
+                'Akcie: %{customdata[0]}<extra></extra>'
+            )
+            
             fig_sectors.update_traces(
                 textposition='inside',
                 textinfo='percent+label',
-                hovertemplate=(
-                    '<b>%{label}</b><br>'
-                    'Hodnota: %{value:,.2f}<br>'
-                    'Podíl: %{percent}<br>'
-                    'Akcie: %{customdata[0]}<extra></extra>'
-                )
+                hovertemplate=hover_temp
             )
             fig_sectors.update_layout(
                 template="plotly_dark",
@@ -409,6 +429,9 @@ with tab_holdings:
         'market_cap': 'Tržní kap.'
     })
 
+    def mask_val(format_str):
+        return lambda x: "***" if privacy_mode else format_str.format(x)
+
     # Zformátujeme a zobrazíme tabulku
     st.dataframe(
         merged[[
@@ -419,13 +442,13 @@ with tab_holdings:
             'All-Time High (15y)', 'Rozdíl od ATH (%)',
             'Tržní kap.'
         ]].style.format({
-            'Množství': '{:,.4f}',
-            'Prům. cena nákupu': '{:,.2f}',
+            'Množství': mask_val('{:,.4f}'),
+            'Prům. cena nákupu': mask_val('{:,.2f}'),
             'Aktuální cena': '{:,.2f}',
-            'Celkové náklady': '{:,.2f}',
-            'Aktuální hodnota': '{:,.2f}',
-            'Zisk / Ztráta': '{:,.2f}',
-            'Zisk / Ztráta (%)': '{:+.2f} %',
+            'Celkové náklady': mask_val('{:,.2f}'),
+            'Aktuální hodnota': mask_val('{:,.2f}'),
+            'Zisk / Ztráta': mask_val('{:,.2f}'),
+            'Zisk / Ztráta (%)': mask_val('{:+.2f} %'),
             'All-Time High (15y)': '{:,.2f}',
             'Rozdíl od ATH (%)': '{:+.2f} %',
             'Tržní kap.': format_market_cap
@@ -821,13 +844,13 @@ with tab_tx:
                 'Aktuální cena', 'Měna',
                 'Rozdíl vs Aktuální (%)', 'Rozdíl v hodnotě'
             ]].style.format({
-                'Množství (Původní)': '{:,.4f}',
-                'Cena (Původní)': '{:,.4f}',
-                'Množství (Po splitech)': '{:,.4f}',
-                'Cena (Po splitech)': '{:,.2f}',
+                'Množství (Původní)': mask_val('{:,.4f}'),
+                'Cena (Původní)': mask_val('{:,.4f}'),
+                'Množství (Po splitech)': mask_val('{:,.4f}'),
+                'Cena (Po splitech)': mask_val('{:,.2f}'),
                 'Aktuální cena': '{:,.2f}',
                 'Rozdíl vs Aktuální (%)': '{:+.2f} %',
-                'Rozdíl v hodnotě': '{:+.2f}'
+                'Rozdíl v hodnotě': mask_val('{:+.2f}')
             }).apply(highlight_sell, axis=1
             ).set_properties(
                 subset=['Akcie'],
@@ -880,20 +903,25 @@ with tab_tx:
                 sign = "+" if total_realized >= 0 else ""
 
                 # Zobrazíme souhrnné karty
+                disp_total_realized = "***" if privacy_mode else f"{sign}{total_realized:,.2f}"
+                disp_total_realized_pct = "***" if privacy_mode else f"{sign}{total_realized_pct:.2f} %"
+                disp_total_buy_cost = "***" if privacy_mode else f"{total_buy_cost:,.2f}"
+                disp_total_sell_proceeds = "***" if privacy_mode else f"Celkový výnos: {total_sell_proceeds:,.2f}"
+
                 m_col1, m_col2, m_col3, m_col4 = st.columns(4)
                 with m_col1:
                     st.markdown(f"""
                     <div class="metric-card">
                         <div class="metric-title">Realizovaný zisk/ztráta</div>
-                        <div class="metric-value {delta_class}">{sign}{total_realized:,.2f}</div>
-                        <div class="metric-delta {delta_class}">{sign}{total_realized_pct:.2f} %</div>
+                        <div class="metric-value {delta_class}">{disp_total_realized}</div>
+                        <div class="metric-delta {delta_class}">{disp_total_realized_pct}</div>
                     </div>""", unsafe_allow_html=True)
                 with m_col2:
                     st.markdown(f"""
                     <div class="metric-card">
                         <div class="metric-title">Celkové náklady nákupů</div>
-                        <div class="metric-value">{total_buy_cost:,.2f}</div>
-                        <div style="font-size:13px;color:#4c566a;">Celkový výnos: {total_sell_proceeds:,.2f}</div>
+                        <div class="metric-value">{disp_total_buy_cost}</div>
+                        <div style="font-size:13px;color:#4c566a;">{disp_total_sell_proceeds}</div>
                     </div>""", unsafe_allow_html=True)
                 with m_col3:
                     st.markdown(f"""
@@ -924,13 +952,13 @@ with tab_tx:
                         'Realizovaný zisk/ztráta', 'Realizovaný zisk/ztráta (%)',
                         'Drženo dní'
                     ]].style.format({
-                        'Množství': '{:,.4f}',
-                        'Nákupní cena (1 ks)': '{:,.2f}',
-                        'Prodejní cena (1 ks)': '{:,.2f}',
-                        'Náklady nákupu': '{:,.2f}',
-                        'Výnos prodeje': '{:,.2f}',
-                        'Realizovaný zisk/ztráta': '{:+,.2f}',
-                        'Realizovaný zisk/ztráta (%)': '{:+.2f} %',
+                        'Množství': mask_val('{:,.4f}'),
+                        'Nákupní cena (1 ks)': mask_val('{:,.2f}'),
+                        'Prodejní cena (1 ks)': mask_val('{:,.2f}'),
+                        'Náklady nákupu': mask_val('{:,.2f}'),
+                        'Výnos prodeje': mask_val('{:,.2f}'),
+                        'Realizovaný zisk/ztráta': mask_val('{:+,.2f}'),
+                        'Realizovaný zisk/ztráta (%)': mask_val('{:+.2f} %'),
                         'Drženo dní': '{:,.0f}'
                     }).set_properties(
                         subset=['Akcie'],
