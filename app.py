@@ -662,7 +662,9 @@ with tab_tx:
                         st.error("Musíš zadat Ticker.")
                     else:
                         from datetime import timezone
-                        dt = datetime.combine(date_val, time_val).replace(tzinfo=timezone.utc)
+                        import zoneinfo
+                        dt_local = datetime.combine(date_val, time_val).replace(tzinfo=zoneinfo.ZoneInfo("Europe/Prague"))
+                        dt = dt_local.astimezone(timezone.utc)
                         # Vytvoření dočasného tx_id
                         import hashlib
                         key = f"{dt}|{broker_val}|{ticker_val.upper().strip()}|{way_val}|{qty_val:.8f}"
@@ -755,7 +757,9 @@ with tab_tx:
                                 st.error("Musíš zadat Ticker.")
                             else:
                                 from datetime import timezone
-                                e_dt = datetime.combine(e_date_val, e_time_val).replace(tzinfo=timezone.utc)
+                                import zoneinfo
+                                e_dt_local = datetime.combine(e_date_val, e_time_val).replace(tzinfo=zoneinfo.ZoneInfo("Europe/Prague"))
+                                e_dt = e_dt_local.astimezone(timezone.utc)
                                 changes = {
                                     "Date": e_dt,
                                     "Broker_File": e_broker_val,
