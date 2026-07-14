@@ -150,7 +150,8 @@ def get_portfolio_data(_force_refresh=2):
         
         return transactions, holdings_updated, closed_positions
     except Exception as e:
-        st.error(f"Nepodařilo se načíst data portfolia: {e}")
+        import traceback
+        st.error(f"Nepodařilo se načíst data portfolia: {e}\n\nTraceback:\n```\n{traceback.format_exc()}\n```")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
 # --- SIDEBAR (Boční panel) ---
