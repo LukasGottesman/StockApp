@@ -80,8 +80,8 @@ def load_transactions(directory_path="."):
     # Spojíme všechny tabulky do jedné velké tabulky
     merged_df = pd.concat(all_dfs, ignore_index=True)
     
-    # Převedeme sloupec s datem na skutečný datumový typ (Datetime), abychom podle něj mohli řadit
-    merged_df['Date'] = pd.to_datetime(merged_df['Date'])
+    # Převedeme sloupec s datem na skutečný datumový typ (Datetime) a vynutíme UTC
+    merged_df['Date'] = pd.to_datetime(merged_df['Date'], utc=True)
     
     # Vyčistíme tickery
     merged_df['Ticker'] = merged_df['Base currency (name)'].apply(clean_ticker)
@@ -106,7 +106,7 @@ def load_transactions(directory_path="."):
             for col, val in changes.items():
                 if col in merged_df.columns:
                     if col == 'Date':
-                        merged_df.loc[mask, col] = pd.to_datetime(val)
+                        merged_df.loc[mask, col] = pd.to_datetime(val, utc=True)
                     else:
                         merged_df.loc[mask, col] = val
             # Označíme: split-korekce se na tuto transakci nevztahuje
@@ -121,7 +121,7 @@ def load_transactions(directory_path="."):
     added = store.get("added", [])
     if added:
         added_df = pd.DataFrame(added)
-        added_df['Date'] = pd.to_datetime(added_df['Date'])
+        added_df['Date'] = pd.to_datetime(added_df['Date'], utc=True)
         # Doplníme chybějící sloupce prázdnými hodnotami
         for col in merged_df.columns:
             if col not in added_df.columns:
