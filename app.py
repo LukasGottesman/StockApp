@@ -661,7 +661,8 @@ with tab_tx:
                     if ticker_val.strip() == "":
                         st.error("Musíš zadat Ticker.")
                     else:
-                        dt = datetime.combine(date_val, time_val)
+                        from datetime import timezone
+                        dt = datetime.combine(date_val, time_val).replace(tzinfo=timezone.utc)
                         # Vytvoření dočasného tx_id
                         import hashlib
                         key = f"{dt}|{broker_val}|{ticker_val.upper().strip()}|{way_val}|{qty_val:.8f}"
@@ -753,7 +754,8 @@ with tab_tx:
                             if e_ticker_val.strip() == "":
                                 st.error("Musíš zadat Ticker.")
                             else:
-                                e_dt = datetime.combine(e_date_val, e_time_val)
+                                from datetime import timezone
+                                e_dt = datetime.combine(e_date_val, e_time_val).replace(tzinfo=timezone.utc)
                                 changes = {
                                     "Date": e_dt,
                                     "Broker_File": e_broker_val,
