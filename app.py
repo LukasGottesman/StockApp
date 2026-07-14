@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # --- OCHRANA HESLEM ---
-APP_PASSWORD = "heslo"  # 👈 ZDE SI ZMĚŇ HESLO NA NĚJAKÉ VLASTNÍ!
+APP_PASSWORD = "Lukas753*"  # 👈 ZDE SI ZMĚŇ HESLO NA NĚJAKÉ VLASTNÍ!
 
 def check_password():
     """Vrátí True, pokud uživatel zadal správné heslo."""
