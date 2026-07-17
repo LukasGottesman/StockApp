@@ -1,2 +1,25 @@
+# === Osobni a financni data ===
+# CSV exporty z brokeru (FIO, Revolut, XTB, Delta)
+*.csv
+
+# Excel soubory
+*.xlsx
+*.xls
+
+# JSON datove soubory (cache, manualni transakce)
+*.json
+!package.json
+!package-lock.json
+
+# === Secrets a konfigurace ===
+.env
+.streamlit/secrets.toml
+
+# === Lokalni cache a prostredi ===
 .venv/
 __pycache__/
+*_cache.json
+
+# === Systemove soubory ===
+.DS_Store
+Thumbs.db

@@ -46,36 +46,54 @@ def _gen_tx_id(row):
     return hashlib.sha1(key.encode('utf-8')).hexdigest()[:16]
 
 
-def load_transactions(directory_path="."):
+def load_transactions(directory_path=".", uploaded_files=None):
     """
-    Načte všechny CSV soubory s exporty z Delty v zadaném adresáři.
-    """
-    # Vyhledáme všechny soubory začínající na "delta_" a končící na ".csv"
-    csv_files = glob.glob(os.path.join(directory_path, "delta_*.csv"))
+    Načte transakce z CSV souborů.
     
+    Priorita zdrojů dat:
+    1. uploaded_files (z st.file_uploader) — soubory v RAM, nikdy na disku
+    2. Lokální soubory delta_*.csv (pouze pro lokální vývoj)
+    
+    Bezpečnost: Na Streamlit Cloud se CSV soubory NIKDY neukládají na disk.
+    Zůstávají pouze v operační paměti (RAM) a po zavření prohlížeče zmizí.
+    """
     all_dfs = []
     
-    for file_path in csv_files:
-        # Zjistíme jméno brokera z názvu souboru (např. delta_FIO_26062026.csv -> FIO)
-        filename = os.path.basename(file_path)
-        parts = filename.split("_")
-        if len(parts) >= 2:
-            broker_name = parts[1]
-        else:
-            broker_name = "Unknown"
-            
-        print(f"Načítám transakce pro brokera: {broker_name} ze souboru {filename}")
-        
-        # Načteme CSV pomocí knihovny pandas
-        # Pandas načte tabulku jako objekt DataFrame (něco jako tabulka v Excelu)
-        df = pd.read_csv(file_path)
-        
-        # Přidáme sloupec s názvem brokera
-        df['Broker_File'] = broker_name
-        all_dfs.append(df)
-        
+    # 1. Priorita: Nahrané soubory z file_uploader (bezpečné, v RAM)
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            filename = uploaded_file.name
+            parts = filename.replace(".csv", "").split("_")
+            if len(parts) >= 2:
+                broker_name = parts[1]
+            else:
+                broker_name = "Unknown"
+                
+            df = pd.read_csv(uploaded_file)
+            df['Broker_File'] = broker_name
+            all_dfs.append(df)
+    
+    # 2. Záloha: Lokální soubory (pouze pro lokální vývoj)
     if not all_dfs:
-        raise FileNotFoundError("Nebyly nalezeny žádné CSV soubory začínající na 'delta_'.")
+        csv_files = glob.glob(os.path.join(directory_path, "delta_*.csv"))
+        
+        for file_path in csv_files:
+            filename = os.path.basename(file_path)
+            parts = filename.split("_")
+            if len(parts) >= 2:
+                broker_name = parts[1]
+            else:
+                broker_name = "Unknown"
+                
+            df = pd.read_csv(file_path)
+            df['Broker_File'] = broker_name
+            all_dfs.append(df)
+    
+    if not all_dfs:
+        raise FileNotFoundError(
+            "Nebyly nalezeny žádné CSV soubory. "
+            "Nahraj své exporty přes tlačítko '📂 Nahrát CSV exporty' v levém panelu."
+        )
         
     # Spojíme všechny tabulky do jedné velké tabulky
     merged_df = pd.concat(all_dfs, ignore_index=True)

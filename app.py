@@ -16,7 +16,14 @@ st.set_page_config(
 )
 
 # --- OCHRANA HESLEM ---
-APP_PASSWORD = "Lukas753*"  # 👈 ZDE SI ZMĚŇ HESLO NA NĚJAKÉ VLASTNÍ!
+# Heslo je bezpecne ulozeno v Streamlit Secrets (nikdy primo v kodu!)
+# Lokalne: .streamlit/secrets.toml | Na Streamlit Cloud: Settings -> Secrets
+try:
+    APP_PASSWORD = st.secrets["APP_PASSWORD"]
+except (KeyError, FileNotFoundError):
+    st.error("Chyba: Heslo APP_PASSWORD neni nastaveno v Streamlit Secrets. "
+            "Nastav ho v .streamlit/secrets.toml (lokalne) nebo v Settings -> Secrets (Streamlit Cloud).")
+    st.stop()
 
 def check_password():
     """Vrátí True, pokud uživatel zadal správné heslo."""
@@ -99,10 +106,10 @@ st.markdown("""
 # Streamlit používá kešování, aby nemusel při každé interakci uživatele znovu spouštět těžké výpočty.
 # @st.cache_data říká: pokud se nezměnily vstupní CSV soubory, načti výsledek z paměti.
 @st.cache_data(ttl=600)  # Keš vyprší po 10 minutách (600 s)
-def get_portfolio_data(_force_refresh=2):
+def get_portfolio_data(_uploaded_files=None, _force_refresh=2):
     try:
-        # 1. Načteme transakce z CSV souborů
-        transactions = load_transactions()
+        # 1. Načteme transakce z CSV souborů (z uploaderu nebo lokálně)
+        transactions = load_transactions(uploaded_files=_uploaded_files)
         
         # 2. Upravíme transakce o splity akcií
         transactions = adjust_transactions_for_splits(transactions)
@@ -150,14 +157,30 @@ def get_portfolio_data(_force_refresh=2):
         
         return transactions, holdings_updated, closed_positions
     except Exception as e:
-        import traceback
-        st.error(f"Nepodařilo se načíst data portfolia: {e}\n\nTraceback:\n```\n{traceback.format_exc()}\n```")
+        st.error(f"Nepodarilo se nacist data portfolia: {type(e).__name__}. Zkontroluj format CSV souboru.")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
 # --- SIDEBAR (Boční panel) ---
 with st.sidebar:
     st.title("📈 Nastavení")
     st.write("Vítej v aplikaci pro správu tvého akciového portfolia!")
+    
+    # --- NAHRÁVÁNÍ CSV SOUBORŮ ---
+    # Finanční data se načítají VÝHRADNĚ přes file_uploader.
+    # Soubory zůstávají pouze v paměti (RAM) a po zavření prohlížeče zmizí.
+    st.subheader("📂 Nahrát CSV exporty")
+    uploaded_files = st.file_uploader(
+        "Nahraj exporty z brokerů (delta_FIO, delta_Revolut, delta_XTB)",
+        type=["csv"],
+        accept_multiple_files=True,
+        key="csv_uploads",
+        help="Soubory zůstanou pouze v paměti a po zavření prohlížeče zmizí."
+    )
+    if uploaded_files:
+        st.session_state["uploaded_csv_files"] = uploaded_files
+        st.success(f"Nahráno {len(uploaded_files)} souborů.")
+    
+    st.divider()
     
     # Přepínač pro Privacy Mode
     privacy_mode = st.toggle("👁️ Skrýt finanční detaily (Privacy Mode)", value=True)
@@ -199,11 +222,13 @@ def format_market_cap(val):
     else:
         return f"{val:,.0f}"
 
-# Načteme data
-transactions_df, holdings_df, closed_positions_df = get_portfolio_data()
+# Načteme data (předáme nahrané soubory z file_uploader, pokud existují)
+_uploaded = st.session_state.get("uploaded_csv_files", None)
+transactions_df, holdings_df, closed_positions_df = get_portfolio_data(_uploaded_files=_uploaded)
 
 if transactions_df.empty or holdings_df.empty:
-    st.warning("Čekám na platná data. Ujisti se, že soubory `delta_*.csv` jsou ve složce projektu.")
+    st.warning("📂 Nahraj své CSV exporty přes panel vlevo (📂 Nahrát CSV exporty). "
+               "Pro lokální vývoj můžeš také umístit soubory `delta_*.csv` do složky projektu.")
     st.stop()
 
 
