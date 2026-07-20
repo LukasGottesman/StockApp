@@ -3,7 +3,21 @@ import glob
 import os
 import re
 import hashlib
+import streamlit as st
 from manual_tx_store import load_manual_store
+
+def _get_supabase_client():
+    """
+    Vytvoří a vrátí Supabase klienta.
+    Přihlašovací údaje čte bezpečně z st.secrets.
+    """
+    try:
+        from supabase import create_client
+        url = st.secrets["connections"]["supabase"]["SUPABASE_URL"]
+        key = st.secrets["connections"]["supabase"]["SUPABASE_KEY"]
+        return create_client(url, key)
+    except Exception:
+        return None
 
 def clean_ticker(base_currency_name):
     """
@@ -48,19 +62,32 @@ def _gen_tx_id(row):
 
 def load_transactions(directory_path=".", uploaded_files=None):
     """
-    Načte transakce z CSV souborů.
-    
-    Priorita zdrojů dat:
-    1. uploaded_files (z st.file_uploader) — soubory v RAM, nikdy na disku
-    2. Lokální soubory delta_*.csv (pouze pro lokální vývoj)
-    
-    Bezpečnost: Na Streamlit Cloud se CSV soubory NIKDY neukládají na disk.
-    Zůstávají pouze v operační paměti (RAM) a po zavření prohlížeče zmizí.
+    Načte transakce z dostupných zdrojů v tomto pořadí priority:
+    1. Supabase databáze (primární zdroj — data jsou trvale uložena v cloudu)
+    2. uploaded_files (z st.file_uploader) — záložní ruční nahrání
+    3. Lokální soubory delta_*.csv (pouze pro lokální vývoj)
     """
     all_dfs = []
     
-    # 1. Priorita: Nahrané soubory z file_uploader (bezpečné, v RAM)
-    if uploaded_files:
+    # 1. Priorita: Supabase databáze
+    supabase = _get_supabase_client()
+    if supabase is not None:
+        try:
+            # Načteme všechny transakce z tabulky 'transactions'
+            # Supabase REST API má výchozí limit 1000 řádků, zvýšíme ho
+            response = supabase.table("transactions").select("*").limit(10000).execute()
+            if response.data:
+                df = pd.DataFrame(response.data)
+                # Supabase neukládá Broker_File — odvodíme ho ze sloupce 'Broker'
+                if 'Broker' in df.columns and 'Broker_File' not in df.columns:
+                    df['Broker_File'] = df['Broker']
+                all_dfs.append(df)
+        except Exception as e:
+            # Pokud Supabase selže, pokračujeme na záložní zdroje
+            st.warning(f"Nepodařilo se načíst data z databáze: {type(e).__name__}. Zkouším záložní zdroje.")
+    
+    # 2. Záloha: Nahrané soubory z file_uploader (bezpečné, v RAM)
+    if not all_dfs and uploaded_files:
         for uploaded_file in uploaded_files:
             filename = uploaded_file.name
             parts = filename.replace(".csv", "").split("_")
@@ -73,7 +100,7 @@ def load_transactions(directory_path=".", uploaded_files=None):
             df['Broker_File'] = broker_name
             all_dfs.append(df)
     
-    # 2. Záloha: Lokální soubory (pouze pro lokální vývoj)
+    # 3. Záloha: Lokální soubory (pouze pro lokální vývoj)
     if not all_dfs:
         csv_files = glob.glob(os.path.join(directory_path, "delta_*.csv"))
         
@@ -91,8 +118,8 @@ def load_transactions(directory_path=".", uploaded_files=None):
     
     if not all_dfs:
         raise FileNotFoundError(
-            "Nebyly nalezeny žádné CSV soubory. "
-            "Nahraj své exporty přes tlačítko '📂 Nahrát CSV exporty' v levém panelu."
+            "Nebyly nalezeny žádné transakce. "
+            "Zkontroluj připojení k databázi Supabase nebo nahraj CSV soubory."
         )
         
     # Spojíme všechny tabulky do jedné velké tabulky

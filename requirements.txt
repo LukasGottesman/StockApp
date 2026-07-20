@@ -3,3 +3,4 @@ pandas==3.0.3
 plotly==6.8.0
 yfinance==1.4.1
 matplotlib==3.11.0
+supabase==2.15.2
