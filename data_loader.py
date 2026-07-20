@@ -194,7 +194,7 @@ def calculate_holdings(transactions_df):
     for idx, row in transactions_df.iterrows():
         broker = row['Broker_File']
         ticker = row['Ticker']
-        way = row['Way']  # "BUY" nebo "SELL"
+        way = str(row['Way']).strip().upper()  # "BUY" nebo "SELL"
         qty = float(row['Base amount'])
         total_val = float(row['Quote amount'])
         currency = row['Quote currency']
@@ -264,7 +264,7 @@ def calculate_closed_positions_fifo(transactions_df):
     for _, row in transactions_df.iterrows():
         broker = row['Broker_File']
         ticker = row['Ticker']
-        way = row['Way']
+        way = str(row['Way']).strip().upper()
         qty = float(row['Base amount'])
         total_val = float(row['Quote amount'])
         currency = row['Quote currency']
