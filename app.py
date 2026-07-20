@@ -156,6 +156,9 @@ def get_portfolio_data(_uploaded_files=None, _force_refresh=2):
         closed_positions = calculate_closed_positions_fifo(transactions)
         
         return transactions, holdings_updated, closed_positions
+    except FileNotFoundError:
+        # Žádné soubory nebyly nahrány — to je očekávaný stav, ne chyba
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
     except Exception as e:
         st.error(f"Nepodarilo se nacist data portfolia: {type(e).__name__}. Zkontroluj format CSV souboru.")
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
