@@ -80,7 +80,7 @@ def load_transactions(directory_path=".", uploaded_files=None):
                 df = pd.DataFrame(response.data)
                 # Supabase neukládá Broker_File — odvodíme ho ze sloupce 'Broker'
                 if 'Broker' in df.columns and 'Broker_File' not in df.columns:
-                    df['Broker_File'] = df['Broker']
+                    df['Broker_File'] = df['Broker'].fillna('Unknown')
                 all_dfs.append(df)
         except Exception as e:
             # Pokud Supabase selže, pokračujeme na záložní zdroje

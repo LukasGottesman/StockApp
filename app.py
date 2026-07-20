@@ -421,7 +421,7 @@ with tab_holdings:
     display_holdings = filtered_holdings.copy()
 
     merged = display_holdings.groupby(['ticker', 'currency'], sort=False).agg(
-        broker=('broker', lambda x: ', '.join(sorted(x.unique()))),
+        broker=('broker', lambda x: ', '.join(sorted([str(b) for b in x.unique() if pd.notna(b)]))),
         quantity=('quantity', 'sum'),
         total_cost=('total_cost', 'sum'),
         current_value=('current_value', 'sum'),
