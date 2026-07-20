@@ -2,6 +2,21 @@
 
 
 
+## 🔜 Aktuálně rozpracované
+- [ ] Napojit Supabase (PostgreSQL) databázi místo CSV souborů
+- [ ] Naimportovat CSV data (FIO, Revolut, XTB) do Supabase
+- [ ] Nastavit Supabase klíče ve Streamlit Secrets (lokálně + cloud)
+
+## 🚀 Budoucí: Přepis do Next.js + React (až bude čas)
+- [ ] Kompletní přepis aplikace do Next.js + TypeScript
+- [ ] Hosting na Vercel (zdarma, private repo, žádný cold start)
+- [ ] Supabase jako databáze (už bude nastavená z aktuálního kroku)
+- [ ] Moderní UI s animacemi a responzivním designem
+- [ ] Přepsat Python logiku (FIFO, portfolio výpočty) do TypeScript
+- [ ] Interaktivní grafy (Recharts / Chart.js)
+- [ ] Formulář pro přidávání transakcí přímo v aplikaci
+- [ ] PWA podpora (appka na mobilu jako nativní)
+
 ## Funkce k naprogramování
 
 - [x] Na záložkách "Aktuální pozice" a "Watchlist" přidej do tabulek sloupec s tržní kapitalizací
